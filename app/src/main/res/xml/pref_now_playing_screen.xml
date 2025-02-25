@@ -1,41 +1,66 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+class PlayerFragment : BottomSheetDialogFragment() {
+    private lateinit var binding: FragmentPlayerBinding
+    private lateinit var exoPlayer: ExoPlayer
 
-    <com.kabouzeid.appthemehelper.common.prefs.supportv7.ATEPreferenceCategory android:title="@string/pref_header_now_playing_screen">
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        binding = FragmentPlayerBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
-        <com.poupa.vinylmusicplayer.preferences.NowPlayingScreenPreference
-            app:iconSpaceReserved="false"
-            android:key="now_playing_screen_id"
-            android:title="@string/pref_title_now_playing_screen_appearance" />
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        val song = arguments?.getParcelable<Song>("song")!!
 
-        <com.kabouzeid.appthemehelper.common.prefs.supportv7.ATESwitchPreference
-            app:iconSpaceReserved="false"
-            android:defaultValue="true"
-            android:key="synchronized_lyrics_show"
-            android:summary="@string/pref_summary_synchronized_lyrics_show"
-            android:title="@string/pref_title_synchronized_lyrics_show" />
+        setupPlayer(song)
+        loadAlbumArt(song.albumId)
+        setupControls()
+    }
 
-        <com.kabouzeid.appthemehelper.common.prefs.supportv7.ATESwitchPreference
-            app:iconSpaceReserved="false"
-            android:defaultValue="false"
-            android:key="animate_playing_song_icon"
-            android:summary="@string/pref_summary_animate_playing_song_icon"
-            android:title="@string/pref_title_animate_playing_song_icon" />
+    private fun setupPlayer(song: Song) {
+        exoPlayer = ExoPlayer.Builder(requireContext()).build()
+        exoPlayer.setMediaItem(MediaItem.fromUri(getSongUri(song.id)))
+        exoPlayer.prepare()
+        exoPlayer.playWhenReady = true
+    }
 
-        <com.kabouzeid.appthemehelper.common.prefs.supportv7.ATESwitchPreference
-            app:iconSpaceReserved="false"
-            android:defaultValue="false"
-            android:key="show_song_number_on_playing_queue"
-            android:summary="@string/pref_summary_show_song_number"
-            android:title="@string/pref_title_show_song_number" />
+    private fun loadAlbumArt(albumId: Long) {
+        val uri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), albumId)
+        
+        Coil.load(requireContext(), uri).into(binding.albumArt).apply {
+            val bitmap = (view.drawable as BitmapDrawable).bitmap
+            Palette.from(bitmap).generate { palette ->
+                val dominantColor = palette.dominantSwatch?.rgb ?: Color.BLACK
+                applyDynamicColors(dominantColor)
+            }
+        }
+    }
 
-        <com.poupa.vinylmusicplayer.preferences.SongConfirmationPreference
-            app:iconSpaceReserved="false"
-            android:key="enqueue_songs_default_choice"
-            android:title="@string/pref_title_enqueue_song_default_choice"
-            />
+    private fun applyDynamicColors(@ColorInt color: Int) {
+        val translucentColor = Color.argb(0.2f, Color.red(color), Color.green(color), Color.blue(color))
+        binding.root.setBackgroundColor(translucentColor)
+        binding.progressBar.progressTintList = ColorStateList.valueOf(color)
+    }
 
-    </com.kabouzeid.appthemehelper.common.prefs.supportv7.ATEPreferenceCategory>
+    private fun setupControls() {
+        binding.playPause.setOnClickListener {
+            if (exoPlayer.isPlaying) {
+                exoPlayer.pause()
+                binding.playPause.setImageResource(R.drawable.ic_play)
+            } else {
+                exoPlayer.play()
+                binding.playPause.setImageResource(R.drawable.ic_pause)
+            }
+        }
+    }
 
-</androidx.preference.PreferenceScreen>
+    override fun onDestroy() {
+        exoPlayer.release()
+        super.onDestroy()
+    }
+
+    companion object {
+        fun newInstance(song: Song) = PlayerFragment().apply {
+            arguments = bundleOf("song" to song)
+        }
+    }
+}
