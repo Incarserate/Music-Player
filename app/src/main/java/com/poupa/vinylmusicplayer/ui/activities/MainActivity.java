@@ -384,3 +384,50 @@ public class MainActivity extends AbsSlidingMusicPanelActivity implements Palett
     @ColorInt
     public int getPaletteColor() {return ThemeStore.primaryColor(this);}
 }
+class MainActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityMainBinding
+    private val songs = mutableListOf<Song>()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        checkPermissions()
+        setupRecyclerView()
+    }
+
+    private fun checkPermissions() {
+        if (ContextCompat.checkSelfPermission(this, READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(READ_EXTERNAL_STORAGE), 101)
+        } else {
+            loadSongs()
+        }
+    }
+
+    private fun loadSongs() {
+        val uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+        val cursor = contentResolver.query(uri, null, MediaStore.Audio.Media.IS_MUSIC + "=1", null, null)
+
+        cursor?.use {
+            while (it.moveToNext()) {
+                songs.add(Song(
+                    id = it.getLong(it.getColumnIndex(MediaStore.Audio.Media._ID)),
+                    title = it.getString(it.getColumnIndex(MediaStore.Audio.Media.TITLE)),
+                    artist = it.getString(it.getColumnIndex(MediaStore.Audio.Media.ARTIST)),
+                    albumId = it.getLong(it.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID))
+                ))
+            }
+        }
+        binding.recyclerView.adapter?.notifyDataSetChanged()
+    }
+
+    private fun setupRecyclerView() {
+        binding.recyclerView.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            adapter = MusicAdapter(songs) { song ->
+                PlayerFragment.newInstance(song).show(supportFragmentManager, "Player")
+            }
+        }
+    }
+}
