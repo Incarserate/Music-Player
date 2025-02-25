@@ -1,3 +1,42 @@
+<androidx.constraintlayout.widget.ConstraintLayout
+    android:background="@color/black"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/album_art"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:scaleType="centerCrop"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="64dp"
+        android:clipToOutline="true"
+        android:outlineProvider="bounds"/>
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/progress_bar"
+        android:layout_width="250dp"
+        android:layout_height="4dp"
+        app:trackThickness="4dp"
+        app:trackColor="@color/gray_800"
+        app:layout_constraintTop_toBottomOf="@id/album_art"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <ImageButton
+        android:id="@+id/play_pause"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:background="@drawable/bg_rounded_white"
+        android:src="@drawable/ic_pause"
+        app:layout_constraintTop_toBottomOf="@id/progress_bar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="32dp"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
 package com.poupa.vinylmusicplayer.ui.fragments.player;
 
 import android.animation.Animator;
@@ -258,3 +297,8 @@ public class PlayerAlbumCoverFragment extends AbsMusicServiceFragment implements
         void onToolbarToggled();
     }
 }
+
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <corners android:radius="32dp"/>
+    <solid android:color="@color/white"/>
+</shape>
